@@ -2,8 +2,12 @@ from django.shortcuts import render
 from django.utils.html import strip_tags
 
 import re
+import traceback
 from requests import get
 from bs4 import BeautifulSoup
+
+from .models import Album
+
 
 def index(request):
 	#get_1990s_albums()
@@ -15,35 +19,75 @@ def index(request):
 		'https://pitchfork.com/features/lists-and-guides/7710-the-top-200-albums-of-the-2000s-20-1/',
 	]
 
-	get_album_dict()
+	Album.objects.all().delete()
+
+	# for url in urls:
+	# 	album_dict = get_album_dict(url)
+	# 	save_albums(album_dict)
+
+	albums_1990s = get_1990s_albums()
+	#save_albums(albums_1990s)
 
 	return render(request, 'random_album/index.html', {})
 
-def get_album_dict():
-	url = 'https://pitchfork.com/features/lists-and-guides/7710-the-top-200-albums-of-the-2000s-20-1/'
-	response = get(url)
-	soup = BeautifulSoup(response.text, 'html.parser')
-	contents = soup.findAll('div', {'class': 'list-blurb blurb-container container-fluid'})
-
+def get_album_dict(base_url):
+	# TODO: 
+	# make these functions load into the database
+	# turn these into management commands - class based
+	# implement a different database
 	albums = {}
 
-	for album in contents:
-		#album.h3.find('span', class_ = 'lister-item-year text-muted unbold')
-		rank = album.div.find('div', class_ = 'rank').text
-		artist = album.a.text
-		album_title = album.h2.text
-		year = album.h3.text
-		blurb = album.find('div', class_ = 'contents').p.text
+	for x in range(1,11):
+		if x == 1:
+			url = base_url
+		else:
+			url = f'{base_url}?page={x}'
 
-		albums[rank] = {
-			'artist': artist,
-			'album': album_title,
-			'year': year,
-			'blurb': blurb
-		}
+		response = get(url)
+		soup = BeautifulSoup(response.text, 'html.parser')
+		contents = soup.findAll('div', {'class': 'list-blurb blurb-container container-fluid'})
 
-	print(albums)
-	#print(contents[0].li.text)
+		for album in contents:
+			rank = album.div.find('div', class_ = 'rank').text
+			artist = album.a.text
+			album_title = album.h2.text
+			year = album.h3.text
+			blurb = album.find('div', class_ = 'contents').p.text
+
+			# One album doesn't have a rank for some reason ugh
+			if not rank:
+				rank = sorted(albums.keys())[0] - 1
+
+			try:
+				albums[int(rank)] = {
+					'rank': int(rank),
+					'artist': artist,
+					'album': album_title,
+					'year': int(year),
+					'blurb': blurb
+				}
+			except:
+				print(traceback.format_exc())
+
+	return albums
+
+
+def save_albums(album_dict):
+	for album in album_dict.values():
+		try:
+			Album.objects.create(
+				rank=album['rank'],
+				album=album['album'],
+				artist=album['artist'],
+				year=album['year'],
+				blurb=album['blurb']
+				)
+			print(f'saved {album["year"]} {album["album"]} - {album["artist"]}')
+		except Exception as exc:
+			print(album)
+			print(exc)
+
+
 
 def get_1990s_albums():
 	url = 'https://pitchfork.com/features/lists-and-guides/5923-top-100-albums-of-the-1990s/'
@@ -93,20 +137,30 @@ def get_1990s_albums():
 			label_year_search = re.search(label_year_pattern, str(p))
 			if label_year_search:
 				label_and_year = label_year_search.group(0).split("; ")
+				if len(label_and_year) == 3: #there's an ampersand messing stuff up
+					label = f'{label_and_year[0]} {label_and_year[1]}'
+					year = label_and_year[2]
+					label_and_year = [label, year]
 				label = label_and_year[0].replace("[", "") 
 				year = label_and_year[1].replace("]", "")
 			else:
 				label = None
 				year = None
 
-			if rank and artist and album and label and year:
-				albums[rank] = {
+
+			if rank and artist and album and year:
+				try:
+					albums[int(rank)] = {
+					'rank': int(rank),
 					'artist': artist,
 					'album': album,
-					'label': label,
-					'year': year
+					'year': int(year)
 					}
-	print(albums)
+				except:
+					print(f'ERROR***')
+					print(label_year_search)
+					print(label_and_year)
+	return albums
 
 
 
