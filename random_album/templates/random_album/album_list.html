@@ -1,0 +1,28 @@
+{% extends 'random_album/base.html' %}
+
+{% block content %}
+
+<h1>Albums</h1>
+
+<table class="table" id="albumlist">
+	<thead>
+		<tr>
+			<th>Year</th>
+			<th>Rank</th>
+			<th>Artist</th>
+			<th>Album</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for album in album_list %}
+			<tr>
+				<td>{{ album.year }}</td>
+				<td>{{ album.rank }}</td>
+				<td>{{ album.artist }}</td>
+				<td>{{ album.album }}</td>
+			</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+{% endblock %}

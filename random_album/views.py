@@ -1,23 +1,25 @@
 from django.shortcuts import render
-from django.utils.html import strip_tags
+from django.views.generic.list import ListView
+from django.views.generic import View
 
 import re
 import traceback
 from requests import get
 from bs4 import BeautifulSoup
 
-from .models import Album
+from random_album.models import Album
+
+class AlbumListView(View):
+
+	def get(self, request):
+		template_name = 'album_list.html'
+		context = {}
+		context['album_list'] = Album.objects.all()
+		return render(request, 'random_album/album_list.html', context)
 
 
 def index(request):
-	#TODO:
-	# implement a different database
-	# unit tests
-	# generate a random album
-	# class-based views
-	# get blurbs for 90s albums
 	context = {}
 
 	return render(request, 'random_album/index.html', context)
 
-	
