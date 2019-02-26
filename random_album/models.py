@@ -7,4 +7,5 @@ class Album(models.Model):
 	year = models.IntegerField()
 	blurb = models.CharField(max_length=2000)
 
-	#unique together artist/album?
+	def __str__(self):
+		return f'{self.album} - {self.artist}'
