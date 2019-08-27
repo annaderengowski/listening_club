@@ -1,0 +1,11 @@
+{% extends 'random_album/base.html' %}
+
+{% block content %}
+	<form action='' method='post'>	
+		{% csrf_token %}
+		<h1 class="cover-heading">Give me a random album from: {{ form.decade }}</h1>
+		<p class="lead">
+			<input type='submit' value="Sumbit" class="btn btn-lg btn-secondary">
+		</p>
+	</form>
+{% endblock %}
