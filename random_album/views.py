@@ -1,3 +1,9 @@
+# TODO testing and then TDD
+# TODO heroku deployment
+# TODO auth views & templates
+# TODO front-end styling
+# TODO base template with actual nav bar
+
 from django.shortcuts import render
 from django.views.generic.list import ListView
 from django.views.generic import View
@@ -5,8 +11,6 @@ from django.views.generic import View
 import re
 import traceback
 import random
-from requests import get
-from bs4 import BeautifulSoup
 
 from random_album.models import Album
 from random_album.forms import RandomAlbumForm
